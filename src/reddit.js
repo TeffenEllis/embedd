@@ -5,7 +5,7 @@ export function redditConstructor(spec) {
 
 	let {url, limit} = spec;
 	let embeddSpec = {};
-	
+
 	embeddSpec.base = 'https://www.reddit.com';
 	embeddSpec.searchQs = '/search.json?q=url:';
 	embeddSpec.query = embeddSpec.base + embeddSpec.searchQs + url;
@@ -49,7 +49,7 @@ export function redditConstructor(spec) {
 			}
 			return child;
 		};
-		
+
 		let op = thread[0].data.children[0].data;
 		op.points = op.score;
 		op.children = thread[1].data.children.map(x => {
@@ -58,6 +58,6 @@ export function redditConstructor(spec) {
 		});
 		return op;
 	};
-	
+
 	return embeddConstructor(embeddSpec);
 }

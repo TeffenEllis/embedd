@@ -11,6 +11,7 @@
   "license": "BSD-2-Clause",
   "dependencies": {
     "async": "1.5.2",
+    "human-time": "0.0.1",
     "mustache": "2.2.1"
   },
   "devDependencies": {

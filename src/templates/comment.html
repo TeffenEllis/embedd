@@ -1,45 +1,53 @@
-<article class="{{#isEven}}evenDepth{{/isEven}} {{#lowScore}}closed{{/lowScore}}">
-	
-	<aside>
-		<span>
-			<a class="hideChildrenBtn" href="javascript:void(0)"></a>
-		</span>
-		
-		<span>
-			<a href="{{author_link}}" target="_blank">{{author}}</a>
-		</span>
-		{{#redditActive}}
-		{{#score}}<span><b>{{score}} points</b></span>{{/score}}
-		{{/redditActive}}
-		
-		{{#permalink}}<span><a href="{{permalink}}">{{subreddit}}</a></span>{{/permalink}}
+<article class="embedd-comment {{#isEven}}evenDepth{{/isEven}} {{#lowScore}}closed{{/lowScore}}">
 
-		{{#created}}<span>{{created}}</span>{{/created}}
-	</aside>
+  <aside class="details">
+    <span class="detail hide-children">
+      <a class="hideChildrenBtn" href="javascript:void(0)"></a>
+    </span>
 
-	{{#body_html}}
-	{{& body_html}}
-	{{/body_html}}
+    <span class="detail author">
+      <a href="{{author_link}}" target="_blank">{{author}}</a>
+    </span>
 
-	<aside class="links">
-		<span>
-			<a href="{{thread}}" target="_blank">view on {{config.service}}</a>
-		</span>
-	</aside>
+    {{#redditActive}}
+      {{#score}}
+        <span class="detail score">
+          {{score}} points
+        </span>
+      {{/score}}
+    {{/redditActive}}
 
-	{{#hasReplies}}
-	<div class="children">
-		{{#replies}}
-		{{> comment}}
-		{{/replies}}
-	</div>
+    {{#created}}
+      <a class="detail timestamp" href="{{thread}}" target="_blank" title="{{created.jsonFormatted}}">
+        {{created.humanized}}
+      </a>
+     {{/created}}
 
-	{{#loadMore}}
-	<div class="viewMore">
-		<a href="javascript:void(0)">view more comments</a>
-	</div>
-	{{/loadMore}}
-	
-	{{/hasReplies}}
+     {{#permalink}}
+       <span class="detail permalink">
+          <span>on</span>
+          <a href="{{permalink}}" target="_blank">/r/{{subreddit}}</a>
+        </span>
+      {{/permalink}}
+  </aside>
+
+  {{#body_html}}
+  {{& body_html}}
+  {{/body_html}}
+
+  {{#hasReplies}}
+  <div class="children">
+    {{#replies}}
+    {{> comment}}
+    {{/replies}}
+  </div>
+
+  {{#loadMore}}
+  <div class="viewMore">
+    <a href="javascript:void(0)">view more comments</a>
+  </div>
+  {{/loadMore}}
+
+  {{/hasReplies}}
 
 </article>

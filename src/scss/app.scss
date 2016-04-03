@@ -12,13 +12,24 @@
 
 .embedd-container {
   padding: 20px 0 40px 0;
-  
-  section {
-    @include outer-container;
+
+  .embedd-inner {
     @include animation(embeddFadeIn 500ms ease-in);
     max-width: none;
 
-    p, b, h3, h5, button {
+    .embedd-logo {
+      margin: 0.5em 0;
+    }
+
+    .score {
+      font-weight: bold;
+    }
+
+    .timestamp {
+      color: #888;
+    }
+
+    p, b, h3, h5, button, .score {
       color: #333;
     }
 
@@ -27,14 +38,10 @@
       text-decoration: none;
     }
 
-    .info {
+    .embedd-info {
       display: inline-block;
       text-align: center;
       width: 100%;
-
-      h3, h5 {
-        float: none;
-      }
     }
 
     .buttons {
@@ -57,7 +64,7 @@
         position: relative;
         top: 3px;
       }
-        
+
       .active {
         opacity: 1;
       }
@@ -76,83 +83,118 @@
       cursor: pointer;
       font: inherit !important;
     }
-    
-    article {
-      @include span-columns(12);
+
+    .embedd-comment {
       padding: 10px;
       padding-top: 10px;
       margin-bottom: 10px;
-      border: 1px solid #f2f2f2;
+      border: 1px solid #E6E6E6;
       border-radius: 3px;
-      background-color: #f5f5f5;
+      background-color: #F7F7F8;
 
       p {
         margin: 10px 0;
       }
 
-      span {
-        margin-right: 5px;
+      .details {
+        font-size: 0.9em;
+
+        .detail {
+          display: inline-block;
+          vertical-align: baseline;
+        }
+
+        .detail + .detail {
+          margin-left: 0.2em;
+        }
+      }
+
+      .children .detail.permalink {
+        display: none;
       }
 
       .hideChildrenBtn::before {
-        content: "[ - ]";
+        content: "[–]";
         font-style: normal;
       }
 
       blockquote {
         margin: 0;
+        padding: 0 1em;
         opacity: 0.7;
 
         p {
           padding-left: 15px;
-          border-left: 1px solid #333;
+          border-left: 2px solid #666;
         }
       }
 
       .viewMore {
         text-align: center;
       }
-      
+
       .children {
         padding-top: 15px;
       }
+
+      h1 {
+        font-size: 1.5em;
+      }
+
+      h2 {
+        font-size: 1.4em;
+      }
+
+      h3 {
+        font-size: 1.3em;
+      }
+
+      h4 {
+        font-size: 1.2em;
+      }
+
+      h5 {
+        font-size: 1.1em;
+      }
     }
-    article article:nth-of-type(n+4) {
+
+    .embedd-comment .embedd-comment:nth-of-type(n+4) {
       display: none;
     }
-    article.evenDepth {
-      background-color: #fff;
+
+    .embedd-comment.evenDepth {
+      background-color: #fdfdfd;
     }
-      
-    article.closed {
+
+    .embedd-comment.closed {
       .md, .links, .children, p {
         display: none;
       }
+
       .hideChildrenBtn::before {
         content: "[ + ]";
       }
+
+      .viewMore {
+        display: none;
+      }
+
       span {
         font-style: italic;
         opacity: 0.7;
       }
     }
-      
+
     @media only screen and (min-width: 640px) {
-      article {
+      .embedd-comment {
         padding: 20px;
       }
-      .info {
+      .embedd-info {
         text-align: left;
-        h3 {
-          float: left;
-        }
-        h5 {
-          float: right;
-        }
       }
     }
   }
-  .hasBtns .comments > article:first-of-type {
+  .hasBtns .comments > .embedd-comment:first-of-type {
       border-top-left-radius: 0;
     }
   .dark {

@@ -9,12 +9,10 @@ import {redditConstructor} from './reddit';
 const mainTemplate = require('./templates/main.html');
 const commentTemplate = require('./templates/comment.html');
 
-function contextConstructor() {
+function contextConstructor(userConfig = {}) {
 	let context = {};
-	let script = document.currentScript;
-	let parent = script.parentNode;
 	let container = document.createElement('div');
-	
+
 	context.config = {
 		element: container,
 		url: location.protocol + '//' + location.host + location.pathname,
@@ -26,22 +24,14 @@ function contextConstructor() {
 		limit: 5,
 		debug: false
 	};
-	
-	let userConfig = script.innerHTML.length > 0
-				? JSON.parse(script.innerHTML.trim())
-				: {};
-	
+
 	context.config = extend(context.config, userConfig);
 
 	if(typeof context.config.element === 'string') {
 		context.config.element = document.querySelector(context.config.element);
 	}
-	
-	context.config.element.className = 'embedd-container';
-	
-	if(context.config.element === container) {
-		parent.insertBefore(container, script);
-	}
+
+	context.config.element.classList.add('embedd-container');
 
 	if(context.config.loadMore && context.config.infiniteScroll) {
 		context.config.loadMore = false;
@@ -64,14 +54,14 @@ function contextConstructor() {
 
 	function extend(o1, o2) {
 		let result={};
-		
+
 		for(let key in o1) {
 				result[key] = o1[key];
 		}
 		for(let key in o2) {
 				result[key] = o2[key];
 		}
-		
+
 		return result;
 	}
 
@@ -96,7 +86,7 @@ function contextConstructor() {
 				context.init();
 			}, false);
 		}
-		
+
 		if(hnBtn) {
 			hnBtn.addEventListener('click', () => {
 				context.config.service = 'hn';
@@ -113,7 +103,6 @@ function contextConstructor() {
 		if(!context.config.loadMore && context.config.infiniteScroll) {
 			window.addEventListener('scroll', loadOnScroll, false);
 		}
-		
 	}
 
 	function loadOnScroll() {
@@ -125,9 +114,13 @@ function contextConstructor() {
 	}
 
 	function renderHtml(obj) {
+		const {service} = context.config;
 		let data = extend({}, obj);
+
 		data.config = extend({}, obj.config);
-		
+
+		data.serviceName = service.substring(0, 1).toUpperCase() + service.substring(1, service.length)
+
 		data.redditActive = () => {
 			return context.config.service === 'reddit';
 		};
@@ -139,7 +132,7 @@ function contextConstructor() {
 		if(data.data.next.length === 0) {
 			data.config.loadMore = false;
 		}
-		
+
 		let html = mustache.render(mainTemplate, data, { comment : commentTemplate });
 
 		if(context.config.debug) {
@@ -153,7 +146,7 @@ function contextConstructor() {
 	function renderMore({ data, config, redditActive }) {
 		let template = '{{#comments}}{{> comment}}{{/comments}}';
 		let element = document.querySelector('.embedd-container .comments');
-		
+
 		data.comments = data.next.slice(0, config.limit);
 		data.next = data.next.slice(config.limit);
 		data.config = config;
@@ -176,14 +169,14 @@ function contextConstructor() {
 				window.removeEventListener('scroll', loadOnScroll, false);
 			}
 		}
-		
+
 		initListeners();
 	}
 
 	function hideChildren(e) {
 		let el = e.target;
 		let parentComment = el.parentNode.parentNode.parentNode;
-		
+
 		parentComment.classList.toggle('closed');
 	}
 
@@ -234,7 +227,7 @@ function contextConstructor() {
 		}
 
 		data.data = service.getComments;
-		
+
 		async.series(data, (err, result) => {
 			result.submitUrl = service.submitUrl;
 			context = extend(context, result);
@@ -247,3 +240,9 @@ function contextConstructor() {
 
 const context = contextConstructor();
 context.init();
+
+window.Embedd = {
+	init(options) {
+		contextConstructor(options).init();
+	}
+}

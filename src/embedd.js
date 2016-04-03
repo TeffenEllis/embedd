@@ -1,39 +1,21 @@
 import async from 'async';
+import human from 'human-time';
 
 export function decode(html) {
 	if(!html) return false;
-	
+
 	let txt = document.createElement("textarea");
 	txt.innerHTML = html;
-	
+
 	return txt.value;
 }
 
 export function parseDate(unix) {
-
-	let now = new Date().getTime() / 1000;
-
-	if(!unix || unix > now) return false;
-
-	let seconds = now - unix,
-			minutes = Math.floor(seconds / 60),
-			hours = Math.floor(minutes / 60),
-			days = Math.floor(hours / 24);
-
-	if(days === 1)
-		return '1 day ago';
-	if(days > 0)
-		return days + ' days ago';
-	if(hours === 1)
-		return '1 hour ago';
-	if(hours > 0)
-		return hours + ' hours ago';
-	if(minutes === 1)
-		return '1 minute ago';
-	if(minutes > 0)
-		return minutes + ' minutes ago';
-
-	return 'a few seconds ago';
+	const instance = new Date(unix * 1000)
+	return {
+		jsonFormatted: instance.toJSON(),
+		humanized: human(instance)
+	}
 }
 
 export function embeddConstructor(spec) {
@@ -43,10 +25,10 @@ export function embeddConstructor(spec) {
 	if(!spec.commentFmt) { throw new Error('commentFmt method isnt defined'); }
 	if(!spec.threadFmt) { throw new Error('threadFmt method isnt defined'); }
 	if(spec.limit === 0) { spec.limit = null; }
-	
+
 	let embedd = {};
 	let cache = {};
-	
+
 	function handleError(err) {
 		throw new Error(err);
 	}
@@ -103,7 +85,7 @@ export function embeddConstructor(spec) {
 	function commentConstructor({ comment, op, depth }) {
 		let cdepth = depth || 0;
 		let c = spec.commentFmt(comment);
-		
+
 		c.depth = cdepth;
 		c.subreddit = op.subreddit;
 
@@ -158,7 +140,7 @@ export function embeddConstructor(spec) {
 			let data = comments[index];
 			let newScore = score += data.op.points;
 			let newComments = arr.concat(data.comments);
-			
+
 			return merge(newScore, newComments, index + 1);
 		};
 
@@ -172,7 +154,7 @@ export function embeddConstructor(spec) {
 		merged.comments = sorted.slice(0, limit);
 		merged.next = sorted.slice(limit);
 		merged.hasMore = !!merged.next.length;
-		
+
 		cb(null, merged);
 	}
 
@@ -184,11 +166,11 @@ export function embeddConstructor(spec) {
 			spec.dataFmt
 		], (err, data) => {
 			if(err) { throw new Error(err); }
-			
+
 			let threads = data.hits.filter(x => {
 				return !!x.num_comments;
 			});
-			
+
 			cb(null, !!threads.length);
 		});
 	};
