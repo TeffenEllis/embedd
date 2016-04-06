@@ -2,12 +2,12 @@
   {{#data}}
   <div class="embedd-info">
     {{#score}}
-      <h3>{{score}} upvotes {{#multiple}}over {{threads}} threads{{/multiple}} on {{serviceName}}</h3>
+      <h3>{{score}} upvotes {{#multiple}}over {{threads}} threads{{/multiple}} on {{config.service}}</h3>
     {{/score}}
 
     {{^score}}
       <a target="_blank" href="{{submitUrl}}" class="no-comments">
-        <h3>Submit to {{config.service}}</h3>
+        <h3>Share this on {{config.service}}</h3>
       </a>
     {{/score}}
   </div>
@@ -38,7 +38,7 @@
 
   {{#config.loadMore}}
   <div class="more-btn-container">
-    <button class="button more-btn">Load More</button>
+    <button class="button more-btn">Load More Comments</button>
   </div>
   {{/config.loadMore}}
 
