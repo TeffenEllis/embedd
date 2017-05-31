@@ -1,192 +1,196 @@
-import async from 'async';
-import human from 'human-time';
+import async from 'async'
+import human from 'human-time'
 
-export function decode(html) {
-	if(!html) return false;
+export function decode (html) {
+  if (!html) return false
 
-	let txt = document.createElement("textarea");
-	txt.innerHTML = html;
+  let txt = document.createElement('textarea')
+  txt.innerHTML = html
 
-	return txt.value;
+  return txt.value
 }
 
-export function parseDate(unix) {
-	const instance = new Date(unix * 1000)
-	return {
-		jsonFormatted: instance.toJSON(),
-		humanized: human(instance)
-	}
+export function parseDate (unix) {
+  const instance = new Date(unix * 1000)
+  return {
+    jsonFormatted: instance.toJSON(),
+    humanized: human(instance)
+  }
 }
 
-export function embeddConstructor(spec) {
-	if(!spec) { throw new Error('No spec object has been specified'); }
-	if(!spec.submitUrl) { throw new Error('submitUrl isnt defined'); }
-	if(!spec.dataFmt) { throw new Error('dataFmt method isnt defined'); }
-	if(!spec.commentFmt) { throw new Error('commentFmt method isnt defined'); }
-	if(!spec.threadFmt) { throw new Error('threadFmt method isnt defined'); }
-	if(spec.limit === 0) { spec.limit = null; }
+export function embeddConstructor (spec) {
+  if (!spec) { throw new Error('No spec object has been specified') }
+  if (!spec.submitUrl) { throw new Error('submitUrl isnt defined') }
+  if (!spec.dataFmt) { throw new Error('dataFmt method isnt defined') }
+  if (!spec.commentFmt) { throw new Error('commentFmt method isnt defined') }
+  if (!spec.threadFmt) { throw new Error('threadFmt method isnt defined') }
+  if (spec.limit === 0) { spec.limit = null }
 
-	let embedd = {};
-	let cache = {};
+  let embedd = {}
+  let cache = {}
 
-	function handleError(err) {
-		throw new Error(err);
-	}
+  function handleError (err) {
+    throw new Error(err)
+  }
 
-	function get(url, cb) {
-		if(!url) throw new Error('No URL has been specified');
+  function get (url, cb) {
+    if (!url) throw new Error('No URL has been specified')
+    var XMLHttpRequest = window.XMLHttpRequest
 
-		if(cache[url]) {
-			cb(null, cache[url]);
-		}
-		else {
-			let req = new XMLHttpRequest();
-			req.open('GET', url);
-			req.responseType = 'json';
+    if (typeof INSTALL_ID !== 'undefined' && INSTALL_ID === 'preview') {
+      XMLHttpRequest = INSTALL.preview.XMLHttpRequest.direct
+    }
 
-			req.addEventListener('load', () => {
-				cache[url] = req;
-				cb(null, req);
-			});
+    if (cache[url]) {
+      cb(null, cache[url])
+    } else {
+      let req = new XMLHttpRequest()
+      req.open('GET', url, true)
+      req.responseType = 'json'
 
-			req.addEventListener('error', handleError);
+      req.addEventListener('load', () => {
+        cache[url] = req
+        cb(null, req)
+      })
 
-			req.send();
-		}
-	}
+      req.addEventListener('error', handleError)
 
-	function threadUrl({ sub, id }) {
-		if(sub && id) {
-			return spec.base + '/r/' + sub + '/comments/' + id + '.json';
-		}
+      req.send()
+    }
+  }
 
-		if(!sub && id) {
-			return spec.base + id;
-		}
+  function threadUrl ({ sub, id }) {
+    if (sub && id) {
+      return spec.base + '/r/' + sub + '/comments/' + id + '.json'
+    }
 
-		return false;
-	}
+    if (!sub && id) {
+      return spec.base + id
+    }
 
-	function getThreads(data, cb) {
-		let activeThreads = data.hits.filter(x => {
-			return !!x.num_comments;
-		});
+    return false
+  }
 
-		async.map(activeThreads.slice(0,10), ({id, subreddit}, callback) => {
-			let url = threadUrl({ sub: subreddit, id: id });
+  function getThreads (data, cb) {
+    let activeThreads = data.hits.filter(x => {
+      return !!x.num_comments
+    })
 
-			if(id === 'undefined') { throw new Error('No ID specified'); }
-			get(url, callback);
-		}, (err, result) => {
-			cb(null, result);
-		});
-	}
+    async.map(activeThreads.slice(0, 10), ({id, subreddit}, callback) => {
+      let url = threadUrl({ sub: subreddit, id: id })
 
-	function commentConstructor({ comment, op, depth }) {
-		let cdepth = depth || 0;
-		let c = spec.commentFmt(comment);
+      if (id === 'undefined') { throw new Error('No ID specified') }
+      get(url, callback)
+    }, (_, result) => {
+      cb(null, result)
+    })
+  }
 
-		c.depth = cdepth;
-		c.subreddit = op.subreddit;
+  function commentConstructor ({ comment, op, depth }) {
+    let cdepth = depth || 0
+    let c = spec.commentFmt(comment)
 
-		if(op.permalink) {
-			c.permalink = spec.base + op.permalink;
-			c.thread = spec.base + op.permalink + comment.id;
-		}
+    c.depth = cdepth
+    c.subreddit = op.subreddit
 
-		if(comment.children && comment.children.length > 0) {
-			let nxtDepth = cdepth + 1;
+    if (op.permalink) {
+      c.permalink = spec.base + op.permalink
+      c.thread = spec.base + op.permalink + comment.id
+    }
 
-			c.hasReplies = true;
-			c.replies = comment.children.reduce((arr, r) => {
-				if(r.author) {
-					arr.push(commentConstructor({comment: r, op: op, depth: nxtDepth }));
-				}
+    if (comment.children && comment.children.length > 0) {
+      let nxtDepth = cdepth + 1
 
-				return arr;
-			}, []);
+      c.hasReplies = true
+      c.replies = comment.children.reduce((arr, r) => {
+        if (r.author) {
+          arr.push(commentConstructor({comment: r, op: op, depth: nxtDepth}))
+        }
 
-			c.loadMore = c.replies.length > 4;
-		}
+        return arr
+      }, [])
 
-		return c;
-	}
+      c.loadMore = c.replies.length > 4
+    }
 
-	function parseComments(threads, cb) {
-		var cs = threads.map(x => {
-			var op = spec.threadFmt(x.response);
-			var comments = op.children.reduce((arr, c) => {
-				if(c.author) {
-					arr.push(commentConstructor({ comment: c, op: op }));
-				}
+    return c
+  }
 
-				return arr;
-			},[]);
-			return { op: op, comments: comments };
-		});
-		cb(null, cs);
-	}
+  function parseComments (threads, cb) {
+    var cs = threads.map(x => {
+      var op = spec.threadFmt(x.response)
+      var comments = op.children.reduce((arr, c) => {
+        if (c.author) {
+          arr.push(commentConstructor({ comment: c, op: op }))
+        }
 
-	function mergeComments(comments, cb) {
-		let merge = (score, arr, index) => {
-			if(index > comments.length - 1) {
-				return {
-					score: score,
-					threads: comments.length,
-					comments: arr,
-					multiple: function() { return this.threads > 1; }
-				};
-			}
-			let data = comments[index];
-			let newScore = score += data.op.points;
-			let newComments = arr.concat(data.comments);
+        return arr
+      }, [])
+      return { op: op, comments: comments }
+    })
+    cb(null, cs)
+  }
 
-			return merge(newScore, newComments, index + 1);
-		};
+  function mergeComments (comments, cb) {
+    let merge = (score, arr, index) => {
+      if (index > comments.length - 1) {
+        return {
+          score: score,
+          threads: comments.length,
+          comments: arr,
+          multiple: function () { return this.threads > 1 }
+        }
+      }
+      let data = comments[index]
+      let newScore = score += data.op.points
+      let newComments = arr.concat(data.comments)
 
-		let merged = merge(0, [], 0);
-		let sorted = merged.comments.sort((a, b) => {
-			return b.score - a.score;
-		});
+      return merge(newScore, newComments, index + 1)
+    }
 
-		let limit = spec.limit || sorted.length;
+    let merged = merge(0, [], 0)
+    let sorted = merged.comments.sort((a, b) => {
+      return b.score - a.score
+    })
 
-		merged.comments = sorted.slice(0, limit);
-		merged.next = sorted.slice(limit);
-		merged.hasMore = !!merged.next.length;
+    let limit = spec.limit || sorted.length
 
-		cb(null, merged);
-	}
+    merged.comments = sorted.slice(0, limit)
+    merged.next = sorted.slice(limit)
+    merged.hasMore = !!merged.next.length
 
-	embedd.submitUrl = spec.submitUrl;
+    cb(null, merged)
+  }
 
-	embedd.hasComments = (cb) => {
-		async.waterfall([
-			async.apply(get, spec.query),
-			spec.dataFmt
-		], (err, data) => {
-			if(err) { throw new Error(err); }
+  embedd.submitUrl = spec.submitUrl
 
-			let threads = data.hits.filter(x => {
-				return !!x.num_comments;
-			});
+  embedd.hasComments = (cb) => {
+    async.waterfall([
+      async.apply(get, spec.query),
+      spec.dataFmt
+    ], (err, data) => {
+      if (err) { throw new Error(err) }
 
-			cb(null, !!threads.length);
-		});
-	};
+      let threads = data.hits.filter(x => {
+        return !!x.num_comments
+      })
 
-	embedd.getComments = (cb) => {
-		async.waterfall([
-			async.apply(get, spec.query),
-			spec.dataFmt,
-			getThreads,
-			parseComments,
-			mergeComments
-		], (err, result) => {
-			if(err) { throw new Error(err); }
-			cb(null, result);
-		});
-	};
+      cb(null, !!threads.length)
+    })
+  }
 
-	return embedd;
+  embedd.getComments = (cb) => {
+    async.waterfall([
+      async.apply(get, spec.query),
+      spec.dataFmt,
+      getThreads,
+      parseComments,
+      mergeComments
+    ], (err, result) => {
+      if (err) { throw new Error(err) }
+      cb(null, result)
+    })
+  }
+
+  return embedd
 };

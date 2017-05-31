@@ -172,7 +172,7 @@
       background-color: #fdfdfd;
     }
 
-    .embedd-comment.closed {
+    .embedd-comment[data-visibility="hidden"] {
       .md, .links, .children, p {
         display: none;
       }
